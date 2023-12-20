@@ -1,12 +1,14 @@
-#![feature(generic_arg_infer)]
-use std::io;
-use std::io::Write;
+#![feature(generic_arg_infer, slice_flatten)]
+use std::{io, mem};
+use std::io::{Write, Read};
+use std::fs::File;
 use nanorand::{Rng, WyRand};
 
 type Error = Box<dyn std::error::Error>;
 
 const SIZE: usize = 8;
 const SHIPS: usize = 5;
+const SAVE_FILE: &str = "game.bin";
 const DBG_SHOW_ENEMY_SHIPS: bool = false;
 
 /// show the menu to the user until q/quit is entered
@@ -18,8 +20,43 @@ fn main() -> Result<(), Error> {
     println!("i - read instructions");
     println!("q - quit");
     match &*prompt("enter menu option")?.to_lowercase() {
-      "p" | "play" => play()?,
-      "r" | "resume" => println!("resume"),
+      "p" | "play" => {
+        println!("place your ships");
+        let mut player_grid = [[Cell::Empty; _]; _];
+        let mut n = 1;
+        while n <= SHIPS {
+          display_grid(&player_grid, "fleet grid", (0, 0), true);
+          match parse_coord(&prompt(&format!("enter ship coord ({}/{})", n, SHIPS))?) {
+            Ok(c) => {
+              if player_grid[c.1][c.0] == Cell::Empty {
+                player_grid[c.1][c.0] = Cell::Ship;
+                n += 1;
+              } else {
+                println!("ship position already occupied");
+              }
+            }
+            Err(e) => println!("{}", e),
+          }
+        }
+
+        let mut rng = WyRand::new();
+        let mut pc_grid = [[Cell::Empty; _]; _];
+        let mut n = 1;
+        while n <= SHIPS {
+          let x = rng.generate_range(0..SIZE);
+          let y = rng.generate_range(0..SIZE);
+          if pc_grid[y][x] == Cell::Empty {
+            pc_grid[y][x] = Cell::Ship;
+            n += 1;
+          }
+        }
+
+        play(player_grid, pc_grid)?
+      }
+      "r" | "resume" => {
+        let mut f = File::open(SAVE_FILE)?;
+        play(load_grid(&mut f)?, load_grid(&mut f)?)?;
+      }
       "i" | "read" => {
         println!("instructions: ");
         println!("...");
@@ -40,40 +77,10 @@ enum Cell {
   Hit,
 }
 
-/// fill fleet grids and main gameplay loop
-fn play() -> Result<(), Error> {
+/// main gameplay loop
+fn play(mut player_grid: Grid, mut pc_grid: Grid) -> Result<(), Error> {
   let mut rng = WyRand::new();
-  println!("place your ships");
-  let mut player_grid = [[Cell::Empty; _]; _];
-  let mut n = 1;
-  while n <= SHIPS {
-    display_grid(&player_grid, "fleet grid", (0, 0), true);
-    match parse_coord(&prompt(&format!("enter ship coord ({}/{})", n, SHIPS))?) {
-      Ok(c) => {
-        if player_grid[c.1][c.0] == Cell::Empty {
-          player_grid[c.1][c.0] = Cell::Ship;
-          n += 1;
-        } else {
-          println!("ship position already occupied");
-        }
-      }
-      Err(e) => println!("{}", e),
-    }
-  }
-
-  let mut pc_grid = [[Cell::Empty; _]; _];
-  let mut n = 1;
-  while n <= SHIPS {
-    let x = rng.generate_range(0..SIZE);
-    let y = rng.generate_range(0..SIZE);
-    if pc_grid[y][x] == Cell::Empty {
-      pc_grid[y][x] = Cell::Ship;
-      n += 1;
-    }
-  }
-
-  // add win condition
-  loop {
+  let player_won = loop {
     display_grid(&player_grid, "fleet grid", (0, 0), true);
     display_grid(
       &pc_grid,
@@ -81,17 +88,18 @@ fn play() -> Result<(), Error> {
       ((SIZE + 2) * 2, SIZE + 3),
       DBG_SHOW_ENEMY_SHIPS,
     );
+    // player turn
     loop {
       match parse_coord(&prompt("enter target coord")?) {
         Ok(c) => match pc_grid[c.1][c.0] {
           Cell::Miss | Cell::Hit => println!("coordinate already picked"),
           Cell::Empty => {
-            println!("Miss");
+            println!("miss");
             pc_grid[c.1][c.0] = Cell::Miss;
             break;
           }
           Cell::Ship => {
-            println!("Hit");
+            println!("hit");
             pc_grid[c.1][c.0] = Cell::Hit;
             break;
           }
@@ -99,13 +107,51 @@ fn play() -> Result<(), Error> {
         Err(e) => println!("{}", e),
       }
     }
+    if !pc_grid.flatten().contains(&Cell::Ship) {
+      break true;
+    }
 
     // computer turn
+    print!("computer's turn: ");
+    io::stdout().flush()?;
+    loop {
+      let x = rng.generate_range(0..SIZE);
+      let y = rng.generate_range(0..SIZE);
+      match player_grid[y][x] {
+        Cell::Empty => {
+          println!("{}", fmt_coord(x, y));
+          println!("miss");
+          player_grid[y][x] = Cell::Miss;
+          break;
+        }
+        Cell::Ship => {
+          println!("{}", fmt_coord(x, y));
+          println!("hit");
+          player_grid[y][x] = Cell::Hit;
+          break;
+        }
+        _ => {}
+      }
+    }
+    if !player_grid.flatten().contains(&Cell::Ship) {
+      break false;
+    }
+
+    // save
+    let mut f = File::create(SAVE_FILE)?;
+    save_grid(&player_grid, &mut f)?;
+    save_grid(&pc_grid, &mut f)?;
+  };
+  if player_won {
+    println!("you won");
+  } else {
+    println!("you lost");
   }
+  Ok(())
 }
 
 /// parse the given string (case insensitive) as a coordinate (0-based) (B5 -> (1,4))
-/// verifies if the coordinate is within the SIZE, SIZE
+/// verifies if the coordinate is within (SIZE, SIZE)
 fn parse_coord(c: &str) -> Result<(usize, usize), &str> {
   let c = c.to_uppercase().into_bytes();
   if c.len() == 2 {
@@ -117,6 +163,11 @@ fn parse_coord(c: &str) -> Result<(usize, usize), &str> {
   } else {
     Err("expected 2 characters")
   }
+}
+
+/// returns a string representing the given coordinate ((2,3) -> 2D)
+fn fmt_coord(x: usize, y: usize) -> String {
+  format!("{}{}", ('A' as u8 + x as u8) as char, y)
 }
 
 /// prints out the given grid at the given offset
@@ -142,6 +193,17 @@ fn display_grid(grid: &Grid, title: &str, offset: (usize, usize), player: bool) 
     }
   }
   println!();
+}
+
+fn save_grid<W: Write>(grid: &Grid, w: &mut W) -> Result<(), Error> {
+  w.write_all(&grid.iter().flatten().map(|c| *c as u8).collect::<Vec<_>>())?;
+  Ok(())
+}
+
+fn load_grid<R: Read>(r: &mut R) -> Result<Grid, Error> {
+  let mut buf = [0; SIZE * SIZE];
+  r.read_exact(&mut buf)?;
+  Ok(unsafe { mem::transmute(buf) })
 }
 
 /// display the given prompt and read 1 line from the console
