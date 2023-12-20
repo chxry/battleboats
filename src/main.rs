@@ -7,7 +7,7 @@ use nanorand::{Rng, WyRand};
 type Error = Box<dyn std::error::Error>;
 
 const SIZE: usize = 8;
-const SHIPS: usize = 5;
+const SHIPS: &[(usize, u8)] = &[(2, 1), (2, 2), (1, 3)];
 const SAVE_FILE: &str = "game.bin";
 const DBG_SHOW_ENEMY_SHIPS: bool = false;
 
@@ -20,39 +20,7 @@ fn main() -> Result<(), Error> {
     println!("i - read instructions");
     println!("q - quit");
     match &*prompt("enter menu option")?.to_lowercase() {
-      "p" | "play" => {
-        println!("place your ships");
-        let mut player_grid = [[Cell::Empty; _]; _];
-        let mut n = 1;
-        while n <= SHIPS {
-          display_grid(&player_grid, "fleet grid", (0, 0), true);
-          match parse_coord(&prompt(&format!("enter ship coord ({}/{})", n, SHIPS))?) {
-            Ok(c) => {
-              if player_grid[c.1][c.0] == Cell::Empty {
-                player_grid[c.1][c.0] = Cell::Ship;
-                n += 1;
-              } else {
-                println!("ship position already occupied");
-              }
-            }
-            Err(e) => println!("{}", e),
-          }
-        }
-
-        let mut rng = WyRand::new();
-        let mut pc_grid = [[Cell::Empty; _]; _];
-        let mut n = 1;
-        while n <= SHIPS {
-          let x = rng.generate_range(0..SIZE);
-          let y = rng.generate_range(0..SIZE);
-          if pc_grid[y][x] == Cell::Empty {
-            pc_grid[y][x] = Cell::Ship;
-            n += 1;
-          }
-        }
-
-        play(player_grid, pc_grid)?
-      }
+      "p" | "play" => play(input_ships()?, gen_ships())?,
       "r" | "resume" => {
         let mut f = File::open(SAVE_FILE)?;
         play(load_grid(&mut f)?, load_grid(&mut f)?)?;
@@ -82,12 +50,8 @@ fn play(mut player_grid: Grid, mut pc_grid: Grid) -> Result<(), Error> {
   let mut rng = WyRand::new();
   let player_won = loop {
     display_grid(&player_grid, "fleet grid", (0, 0), true);
-    display_grid(
-      &pc_grid,
-      "tracker grid",
-      ((SIZE + 2) * 2, SIZE + 3),
-      DBG_SHOW_ENEMY_SHIPS,
-    );
+    display_grid(&pc_grid, "tracker grid", ((SIZE + 2) * 2, SIZE + 3), false);
+
     // player turn
     loop {
       match parse_coord(&prompt("enter target coord")?) {
@@ -117,6 +81,7 @@ fn play(mut player_grid: Grid, mut pc_grid: Grid) -> Result<(), Error> {
     loop {
       let x = rng.generate_range(0..SIZE);
       let y = rng.generate_range(0..SIZE);
+      // remove duplicate logic here
       match player_grid[y][x] {
         Cell::Empty => {
           println!("{}", fmt_coord(x, y));
@@ -165,9 +130,9 @@ fn parse_coord(c: &str) -> Result<(usize, usize), &str> {
   }
 }
 
-/// returns a string representing the given coordinate ((2,3) -> 2D)
+/// returns a string representing the given coordinate ((2,3) -> D4)
 fn fmt_coord(x: usize, y: usize) -> String {
-  format!("{}{}", ('A' as u8 + x as u8) as char, y)
+  format!("{}{}", (b'A' + x as u8) as char, y + 1)
 }
 
 /// prints out the given grid at the given offset
@@ -184,7 +149,7 @@ fn display_grid(grid: &Grid, title: &str, offset: (usize, usize), player: bool) 
       print!(
         " {}",
         match grid[y][x] {
-          Cell::Ship if player => '#',
+          Cell::Ship if player || DBG_SHOW_ENEMY_SHIPS => '#',
           Cell::Miss if !player => '-',
           Cell::Hit => 'X',
           _ => '~',
@@ -204,6 +169,86 @@ fn load_grid<R: Read>(r: &mut R) -> Result<Grid, Error> {
   let mut buf = [0; SIZE * SIZE];
   r.read_exact(&mut buf)?;
   Ok(unsafe { mem::transmute(buf) })
+}
+
+/// allow the player to pick positions for ships
+fn input_ships() -> Result<Grid, Error> {
+  println!("place your ships");
+  let mut grid = [[Cell::Empty; _]; _];
+  for (i, (num, size)) in SHIPS.iter().enumerate() {
+    let mut n = 1;
+    while n <= *num {
+      display_grid(&grid, "fleet grid", (0, 0), true);
+      println!(
+        "placing ship {}/{}, length {}",
+        SHIPS.iter().take(i).map(|c| c.0).sum::<usize>() + n,
+        SHIPS.iter().map(|c| c.0).sum::<usize>(),
+        size
+      );
+      let vert = loop {
+        match &*prompt("enter ship direction (h/v)")? {
+          "h" => break false,
+          "v" => break true,
+          _ => println!("unknown direction"),
+        }
+      };
+      match parse_coord(&prompt("enter ship coord")?)
+        .and_then(|c| verify_and_place(&mut grid, c, vert, *size))
+      {
+        Ok(_) => n += 1,
+        Err(e) => println!("{}", e),
+      }
+    }
+  }
+  Ok(grid)
+}
+
+/// generate random ships
+fn gen_ships() -> Grid {
+  let mut rng = WyRand::new();
+  let mut grid = [[Cell::Empty; _]; _];
+  for (num, size) in SHIPS {
+    let mut n = 1;
+    while n <= *num {
+      if verify_and_place(
+        &mut grid,
+        (rng.generate_range(0..SIZE), rng.generate_range(0..SIZE)),
+        rng.generate(),
+        *size,
+      )
+      .is_ok()
+      {
+        n += 1;
+      }
+    }
+  }
+  grid
+}
+
+/// verifies that the ship placement given is valid and places the ship if it is
+fn verify_and_place(
+  grid: &mut Grid,
+  mut pos: (usize, usize),
+  vert: bool,
+  size: u8,
+) -> Result<(), &str> {
+  let mut g = *grid;
+  for _ in 0..size {
+    if !((0..SIZE).contains(&pos.0) && (0..SIZE).contains(&pos.1)) {
+      return Err("ship out of bounds");
+    }
+    if grid[pos.1][pos.0] != Cell::Empty {
+      return Err("cell already occupied");
+    }
+    g[pos.1][pos.0] = Cell::Ship;
+    if vert {
+      pos.1 += 1;
+    } else {
+      pos.0 += 1;
+    }
+  }
+  *grid = g;
+  Ok(())
 }
 
 /// display the given prompt and read 1 line from the console
