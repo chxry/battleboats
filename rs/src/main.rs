@@ -168,7 +168,7 @@ fn save_grid<W: Write>(grid: &Grid, w: &mut W) -> Result<(), Error> {
 fn load_grid<R: Read>(r: &mut R) -> Result<Grid, Error> {
   let mut buf = [0; SIZE * SIZE];
   r.read_exact(&mut buf)?;
-  Ok(unsafe { mem::transmute(buf) })
+  Ok(unsafe { mem::transmute(buf) }) // lazy
 }
 
 /// allow the player to pick positions for ships
@@ -176,17 +176,17 @@ fn input_ships() -> Result<Grid, Error> {
   println!("place your ships");
   let mut grid = [[Cell::Empty; _]; _];
   for (i, (num, size)) in SHIPS.iter().enumerate() {
-    let mut n = 1;
-    while n <= *num {
+    let mut n = 0;
+    while n < *num {
       display_grid(&grid, "fleet grid", (0, 0), true);
       println!(
         "placing ship {}/{}, length {}",
-        SHIPS.iter().take(i).map(|c| c.0).sum::<usize>() + n,
+        SHIPS.iter().take(i).map(|c| c.0).sum::<usize>() + n + 1,
         SHIPS.iter().map(|c| c.0).sum::<usize>(),
         size
       );
       let vert = loop {
-        match &*prompt("enter ship direction (h/v)")? {
+        match &*prompt("enter ship direction (h/v)")?.to_lowercase() {
           "h" => break false,
           "v" => break true,
           _ => println!("unknown direction"),
@@ -208,8 +208,8 @@ fn gen_ships() -> Grid {
   let mut rng = WyRand::new();
   let mut grid = [[Cell::Empty; _]; _];
   for (num, size) in SHIPS {
-    let mut n = 1;
-    while n <= *num {
+    let mut n = 0;
+    while n < *num {
       if verify_and_place(
         &mut grid,
         (rng.generate_range(0..SIZE), rng.generate_range(0..SIZE)),
@@ -237,7 +237,7 @@ fn verify_and_place(
     if !((0..SIZE).contains(&pos.0) && (0..SIZE).contains(&pos.1)) {
       return Err("ship out of bounds");
     }
-    if grid[pos.1][pos.0] != Cell::Empty {
+    if g[pos.1][pos.0] != Cell::Empty {
       return Err("cell already occupied");
     }
     g[pos.1][pos.0] = Cell::Ship;
