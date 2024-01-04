@@ -1,0 +1,99 @@
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option: p
+place your ships
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ ~ ~ ~
+3 ~ ~ ~ ~ ~ ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ ~ ~ ~ ~ ~
+placing ship 1/5, length 1
+enter ship coord: c3
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ ~ ~ ~
+3 ~ ~ # ~ ~ ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ ~ ~ ~ ~ ~
+placing ship 2/5, length 1
+enter ship coord: a9
+invalid coordinate
+enter ship coord: 4b
+invalid coordinate
+enter ship coord: e3
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ ~ ~ ~
+3 ~ ~ # ~ # ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ ~ ~ ~ ~ ~
+placing ship 3/5, length 2
+enter ship direction (h/v): h
+enter ship coord: f2
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ # # ~
+3 ~ ~ # ~ # ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ ~ ~ ~ ~ ~
+placing ship 4/5, length 2
+enter ship direction (h/v): v
+enter ship coord: d8
+invalid placement
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ # # ~
+3 ~ ~ # ~ # ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ ~ ~ ~ ~ ~
+placing ship 4/5, length 2
+enter ship direction (h/v): v
+enter ship coord: d7
+fleet grid:
+  A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ # # ~
+3 ~ ~ # ~ # ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ # ~ ~ ~ ~
+8 ~ ~ ~ # ~ ~ ~ ~
+placing ship 5/5, length 3
+enter ship direction (h/v): h
+enter ship coord: d5
+fleet grid:         tracker grid:
+  A B C D E F G H     A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~   1 ~ ~ ~ ~ ~ ~ ~ ~
+2 ~ ~ ~ ~ ~ # # ~   2 ~ ~ ~ ~ ~ ~ ~ ~
+3 ~ ~ # ~ # ~ ~ ~   3 ~ ~ ~ ~ ~ ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~   4 ~ ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ # # # ~ ~   5 ~ ~ ~ ~ ~ ~ ~ ~
+6 ~ ~ ~ ~ ~ ~ ~ ~   6 ~ ~ ~ ~ ~ ~ ~ ~
+7 ~ ~ ~ # ~ ~ ~ ~   7 ~ ~ ~ ~ ~ ~ ~ ~
+8 ~ ~ ~ # ~ ~ ~ ~   8 ~ ~ ~ ~ ~ ~ ~ ~
+enter target coord:

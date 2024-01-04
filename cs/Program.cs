@@ -4,6 +4,7 @@
     const string SAVE_FILE = "game.bin";
     const bool SHOW_ENEMY_SHIPS = false;
 
+    /// represents the state of one location in the grid
     enum Cell {
         Empty,
         Miss,
@@ -11,6 +12,7 @@
         Hit
     }
 
+    /// represents a type of ship
     struct Ship {
         public int num;
         public int len;
@@ -23,6 +25,7 @@
         }
     }
 
+    /// show the menu to the user until q is entered
     static void Main() {
         while (true) {
             Console.WriteLine("- Battleboats -");
@@ -56,10 +59,12 @@
         }
     }
 
+    /// main gameplay loop
     static void Play(Cell[,] playerGrid, Cell[,] pcGrid) {
         Random rng = new Random();
         bool player_won;
         while (true) {
+            // save
             BinaryWriter file = new BinaryWriter(File.Open(SAVE_FILE, FileMode.Create));
             WriteGrid(playerGrid, file);
             WriteGrid(pcGrid, file);
@@ -128,6 +133,7 @@
         }
     }
 
+    /// prompts the user to pick positions for ships
     static Cell[,] InputShips() {
         Console.WriteLine("place your ships");
         Cell[,] grid = new Cell[SIZE, SIZE];
@@ -173,6 +179,7 @@
         return grid;
     }
 
+    /// generate random ships
     static Cell[,] GenShips() {
         Random rng = new Random();
         Cell[,] grid = new Cell[SIZE, SIZE];
@@ -187,6 +194,7 @@
         return grid;
     }
 
+    /// verifies the position of the given ship and returns true if it was placed in the grid
     static bool VerifyAndPlace(ref Cell[,] grid, (int, int) pos, bool vert, int size) {
         Cell[,] g = (Cell[,])grid.Clone();
         for (int i = 0; i < size; i++) {
@@ -209,6 +217,8 @@
         return true;
     }
 
+    /// prints out the given grid at the given offset
+    /// will only display ships if player == true, and misses if player == false
     static void DisplayGrid(Cell[,] grid, string title, (int, int) offset, bool player) {
         Console.CursorLeft += offset.Item1;
         Console.CursorTop -= offset.Item2;
@@ -242,6 +252,7 @@
         Console.WriteLine();
     }
 
+    /// write the given grid to a file
     static void WriteGrid(Cell[,] grid, BinaryWriter file) {
         for (int y = 0; y < SIZE; y++) {
             for (int x = 0; x < SIZE; x++) {
@@ -249,7 +260,8 @@
             }
         }
     }
-
+    
+    /// read a grid from the given file
     static Cell[,] ReadGrid(BinaryReader file) {
         Cell[,] grid = new Cell[SIZE, SIZE];
         for (int y = 0; y < SIZE; y++) {
@@ -260,6 +272,9 @@
         return grid;
     }
 
+    /// parse the given string (case insensitive) as a coordinate (0-based) (B5 -> (1,4))
+    /// verifies if the coordinate is within (SIZE, SIZE)
+    /// returns (-1, -1) if the coordinate is invalid
     static (int, int) ParseCoord(string coord) {
         coord = coord.ToUpper();
         if (coord.Length == 2 && (coord[0] >= 'A' && coord[0] <= 'A' + SIZE - 1) && (coord[1] >= '1' && coord[1] <= '1' + SIZE - 1)) {
@@ -268,15 +283,12 @@
         return (-1, -1);
     }
 
+    /// returns a string representing the given coordinate ((2,3) -> D4)
     static string FmtCoord(int x, int y) {
         return (char)('A' + x) + (y + 1).ToString();
     }
 
-    static string Prompt(string p) {
-        Console.Write(p + ": ");
-        return Console.ReadLine();
-    }
-
+    /// returns true if there are ships in the given grid
     static bool HasShips(Cell[,] grid) {
         for (int y = 0; y < SIZE; y++) {
             for (int x = 0; x < SIZE; x++) {
@@ -288,6 +300,13 @@
         return false;
     }
 
+    /// display the given prompt and read 1 line from the console
+    static string Prompt(string p) {
+        Console.Write(p + ": ");
+        return Console.ReadLine();
+    }
+
+    /// prints out the instructions
     static void Instructions() {
         Console.WriteLine("instructions:");
         Console.WriteLine(" setup your fleet grid by entering coordinates (C3, E5, ...)");

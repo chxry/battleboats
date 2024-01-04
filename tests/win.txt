@@ -1,0 +1,25 @@
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option: r
+fleet grid:         tracker grid:
+  A B C D E F G H     A B C D E F G H
+1 ~ ~ ~ ~ ~ ~ ~ ~   1 ~ ~ ~ ~ ~ ~ X X
+2 ~ ~ ~ ~ ~ # # ~   2 ~ ~ ~ ~ ~ ~ ~ ~
+3 ~ ~ # ~ # ~ ~ ~   3 ~ ~ X ~ ~ ~ ~ ~
+4 ~ ~ ~ ~ ~ ~ ~ ~   4 X ~ ~ ~ ~ ~ ~ ~
+5 ~ ~ ~ X # # ~ ~   5 ~ ~ ~ - ~ ~ ~ X
+6 ~ ~ ~ ~ ~ ~ ~ ~   6 ~ ~ ~ ~ ~ ~ X X
+7 ~ ~ ~ # ~ ~ ~ ~   7 ~ ~ ~ ~ ~ ~ X ~
+8 ~ ~ ~ # ~ ~ ~ ~   8 ~ ~ ~ ~ ~ ~ ~ ~
+enter target coord: h4
+hit
+you won
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option:

@@ -1,0 +1,36 @@
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option:
+unknown option ''
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option: h
+unknown option 'h'
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option: i
+instructions:
+ setup your fleet grid by entering coordinates (C3, E5, ...)
+ choose the direction of longer ships by entering h/v for horizontal/vertical.
+ pick coordinates on the target tracker to attack
+ the grid will either show hit (X) or miss (-).
+ the first player to destroy all the enemy ships wins.
+ ship types:
+ 2 x destroyer (1 cell(s))
+ 2 x submarine (2 cell(s))
+ 1 x carrier (3 cell(s))
+- Battleboats -
+p - play a new game
+r - resume a game
+i - read instructions
+q - quit
+enter menu option: q

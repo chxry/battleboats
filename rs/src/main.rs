@@ -49,6 +49,11 @@ enum Cell {
 fn play(mut player_grid: Grid, mut pc_grid: Grid) -> Result<(), Error> {
   let mut rng = WyRand::new();
   let player_won = loop {
+    // save
+    let mut f = File::create(SAVE_FILE)?;
+    save_grid(&player_grid, &mut f)?;
+    save_grid(&pc_grid, &mut f)?;
+
     display_grid(&player_grid, "fleet grid", (0, 0), true);
     display_grid(&pc_grid, "tracker grid", ((SIZE + 2) * 2, SIZE + 3), false);
 
@@ -101,11 +106,6 @@ fn play(mut player_grid: Grid, mut pc_grid: Grid) -> Result<(), Error> {
     if !player_grid.flatten().contains(&Cell::Ship) {
       break false;
     }
-
-    // save
-    let mut f = File::create(SAVE_FILE)?;
-    save_grid(&player_grid, &mut f)?;
-    save_grid(&pc_grid, &mut f)?;
   };
   if player_won {
     println!("you won");
