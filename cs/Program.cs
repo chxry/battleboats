@@ -1,6 +1,6 @@
 ﻿class Program {
     const int SIZE = 8;
-    static (int, int)[] SHIPS = { (2, 1), (2, 2), (1, 3) };
+    static Ship[] SHIPS = { new Ship(2, 1, "destroyer"), new Ship(2, 2, "submarine"), new Ship(1, 3, "carrier") };
     const string SAVE_FILE = "game.bin";
     const bool SHOW_ENEMY_SHIPS = false;
 
@@ -9,6 +9,18 @@
         Miss,
         Ship,
         Hit
+    }
+
+    struct Ship {
+        public int num;
+        public int len;
+        public string name;
+
+        public Ship(int n, int l, string na) {
+            num = n;
+            len = l;
+            name = na;
+        }
     }
 
     static void Main() {
@@ -26,10 +38,14 @@
                     Play(InputShips(), GenShips());
                     break;
                 case "r":
+                    BinaryReader file = new BinaryReader(File.Open(SAVE_FILE, FileMode.Open));
+                    Cell[,] playerGrid = ReadGrid(file);
+                    Cell[,] pcGrid = ReadGrid(file);
+                    file.Close();
+                    Play(playerGrid, pcGrid);
                     break;
                 case "i":
-                    Console.WriteLine("instructions:");
-                    Console.WriteLine("...");
+                    Instructions();
                     break;
                 case "q":
                     return;
@@ -44,6 +60,11 @@
         Random rng = new Random();
         bool player_won;
         while (true) {
+            BinaryWriter file = new BinaryWriter(File.Open(SAVE_FILE, FileMode.Create));
+            WriteGrid(playerGrid, file);
+            WriteGrid(pcGrid, file);
+            file.Close();
+
             DisplayGrid(playerGrid, "fleet grid", (0, 0), true);
             DisplayGrid(pcGrid, "tracker grid", (2 * (SIZE + 2), SIZE + 2), false);
 
@@ -112,21 +133,23 @@
         Cell[,] grid = new Cell[SIZE, SIZE];
         for (int i = 0; i < SHIPS.Length; i++) {
             int n = 0;
-            while (n < SHIPS[i].Item1) {
+            while (n < SHIPS[i].num) {
                 DisplayGrid(grid, "fleet grid", (0, 0), true);
-                Console.WriteLine("Placing ship " + (SHIPS[..i].Sum(s => s.Item1) + n + 1) + "/" + SHIPS.Sum(s => s.Item1) + " length " + SHIPS[i].Item2);
+                Console.WriteLine("placing ship " + (SHIPS[..i].Sum(s => s.num) + n + 1) + "/" + SHIPS.Sum(s => s.num) + ", length " + SHIPS[i].len);
 
-                bool vert;
-                while (true) {
-                    string dir = Prompt("Enter ship direction (h/v)").ToLower();
-                    if (dir == "h") {
-                        vert = false;
-                        break;
-                    } else if (dir == "v") {
-                        vert = true;
-                        break;
-                    } else {
-                        Console.WriteLine("unknown direction");
+                bool vert = false;
+                if (SHIPS[i].len > 1) {
+                    while (true) {
+                        string dir = Prompt("enter ship direction (h/v)").ToLower();
+                        if (dir == "h") {
+                            vert = false;
+                            break;
+                        } else if (dir == "v") {
+                            vert = true;
+                            break;
+                        } else {
+                            Console.WriteLine("unknown direction");
+                        }
                     }
                 }
 
@@ -140,7 +163,7 @@
                     }
                 }
 
-                if (VerifyAndPlace(ref grid, coord, vert, SHIPS[i].Item2)) {
+                if (VerifyAndPlace(ref grid, coord, vert, SHIPS[i].len)) {
                     n++;
                 } else {
                     Console.WriteLine("invalid placement");
@@ -155,8 +178,8 @@
         Cell[,] grid = new Cell[SIZE, SIZE];
         for (int i = 0; i < SHIPS.Length; i++) {
             int n = 0;
-            while (n < SHIPS[i].Item1) {
-                if (VerifyAndPlace(ref grid, (rng.Next(0, SIZE), rng.Next(0, SIZE)), rng.Next() % 2 == 0, SHIPS[i].Item2)) {
+            while (n < SHIPS[i].num) {
+                if (VerifyAndPlace(ref grid, (rng.Next(0, SIZE), rng.Next(0, SIZE)), rng.Next() % 2 == 0, SHIPS[i].len)) {
                     n++;
                 }
             }
@@ -219,6 +242,24 @@
         Console.WriteLine();
     }
 
+    static void WriteGrid(Cell[,] grid, BinaryWriter file) {
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                file.Write((Byte)grid[y,x]);
+            }
+        }
+    }
+
+    static Cell[,] ReadGrid(BinaryReader file) {
+        Cell[,] grid = new Cell[SIZE, SIZE];
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                grid[y,x] = (Cell)file.ReadByte();
+            }
+        }
+        return grid;
+    }
+
     static (int, int) ParseCoord(string coord) {
         coord = coord.ToUpper();
         if (coord.Length == 2 && (coord[0] >= 'A' && coord[0] <= 'A' + SIZE - 1) && (coord[1] >= '1' && coord[1] <= '1' + SIZE - 1)) {
@@ -245,5 +286,18 @@
             }
         }
         return false;
+    }
+
+    static void Instructions() {
+        Console.WriteLine("instructions:");
+        Console.WriteLine(" setup your fleet grid by entering coordinates (C3, E5, ...)");
+        Console.WriteLine(" choose the direction of longer ships by entering h/v for horizontal/vertical.");
+        Console.WriteLine(" pick coordinates on the target tracker to attack");
+        Console.WriteLine(" the grid will either show hit (X) or miss (-).");
+        Console.WriteLine(" the first player to destroy all the enemy ships wins.");
+        Console.WriteLine(" ship types:");
+        for (int i = 0; i < SHIPS.Length; i++) {
+            Console.WriteLine(" " + SHIPS[i].num + " x " + SHIPS[i].name + " (" + SHIPS[i].len + " cell(s))");
+        }
     }
 }
