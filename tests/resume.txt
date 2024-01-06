@@ -15,8 +15,9 @@ fleet grid:         tracker grid:
 7 ~ ~ ~ # ~ ~ ~ ~   7 ~ ~ ~ ~ ~ ~ ~ ~
 8 ~ ~ ~ # ~ ~ ~ ~   8 ~ ~ ~ ~ ~ ~ ~ ~
 enter target coord: c3
-hit
-computer's turn: D5
+hit C3
+computer's turn:
+hit D5
 fleet grid:         tracker grid:
   A B C D E F G H     A B C D E F G H
 1 ~ ~ ~ ~ ~ ~ ~ ~   1 ~ ~ ~ ~ ~ ~ ~ ~
@@ -28,8 +29,9 @@ fleet grid:         tracker grid:
 7 ~ ~ ~ # ~ ~ ~ ~   7 ~ ~ ~ ~ ~ ~ ~ ~
 8 ~ ~ ~ # ~ ~ ~ ~   8 ~ ~ ~ ~ ~ ~ ~ ~
 enter target coord: d5
-miss
-computer's turn: G8
+miss D5
+computer's turn:
+miss G8
 fleet grid:         tracker grid:
   A B C D E F G H     A B C D E F G H
 1 ~ ~ ~ ~ ~ ~ ~ ~   1 ~ ~ ~ ~ ~ ~ ~ ~

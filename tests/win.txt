@@ -15,7 +15,7 @@ fleet grid:         tracker grid:
 7 ~ ~ ~ # ~ ~ ~ ~   7 ~ ~ ~ ~ ~ ~ X ~
 8 ~ ~ ~ # ~ ~ ~ ~   8 ~ ~ ~ ~ ~ ~ ~ ~
 enter target coord: h4
-hit
+hit H4
 you won
 - Battleboats -
 p - play a new game

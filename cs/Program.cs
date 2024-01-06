@@ -38,9 +38,11 @@
 
             switch (option) {
                 case "p":
+                case "play":
                     Play(InputShips(), GenShips());
                     break;
                 case "r":
+                case "resume":
                     BinaryReader file = new BinaryReader(File.Open(SAVE_FILE, FileMode.Open));
                     Cell[,] playerGrid = ReadGrid(file);
                     Cell[,] pcGrid = ReadGrid(file);
@@ -48,9 +50,12 @@
                     Play(playerGrid, pcGrid);
                     break;
                 case "i":
+                case "read":
+                case "instructions":
                     Instructions();
                     break;
                 case "q":
+                case "quit":
                     return;
                 default:
                     Console.WriteLine("unknown option '" + option + "'");
@@ -62,7 +67,6 @@
     /// main gameplay loop
     static void Play(Cell[,] playerGrid, Cell[,] pcGrid) {
         Random rng = new Random();
-        bool player_won;
         while (true) {
             // save
             BinaryWriter file = new BinaryWriter(File.Open(SAVE_FILE, FileMode.Create));
@@ -81,25 +85,13 @@
                     Console.WriteLine("invalid coordinate");
                     continue;
                 }
-                switch (pcGrid[coord.Item2, coord.Item1]) {
-                    case Cell.Miss:
-                    case Cell.Hit:
-                        Console.WriteLine("coordinate already picked");
-                        continue;
-                    case Cell.Empty:
-                        Console.WriteLine("miss");
-                        pcGrid[coord.Item2, coord.Item1] = Cell.Miss;
-                        break;
-                    case Cell.Ship:
-                        Console.WriteLine("hit");
-                        pcGrid[coord.Item2, coord.Item1] = Cell.Hit;
-                        break;
+                if (Fire(ref pcGrid, coord, true)) {
+                    break;
                 }
-                break;
             }
             if (!HasShips(pcGrid)) {
-                player_won = true;
-                break;
+                Console.WriteLine("you won");
+                return;
             }
 
             // computer turn
@@ -107,29 +99,14 @@
             while (true) {
                 int x = rng.Next(0, SIZE);
                 int y = rng.Next(0, SIZE);
-                Console.WriteLine(FmtCoord(x, y));
-                switch (playerGrid[y, x]) {
-                    case Cell.Miss:
-                    case Cell.Hit:
-                        continue;
-                    case Cell.Empty:
-                        playerGrid[y, x] = Cell.Miss;
-                        break;
-                    case Cell.Ship:
-                        playerGrid[y, x] = Cell.Hit;
-                        break;
+                if (Fire(ref playerGrid, (y,x), false)) {
+                    break;
                 }
-                break;
             }
             if (!HasShips(playerGrid)) {
-                player_won = false;
-                break;
+                Console.WriteLine("you lost");
+                return;
             }
-        }
-        if (player_won) {
-            Console.WriteLine("you won");
-        } else {
-            Console.WriteLine("you lost");
         }
     }
 
@@ -148,7 +125,6 @@
                     while (true) {
                         string dir = Prompt("enter ship direction (h/v)").ToLower();
                         if (dir == "h") {
-                            vert = false;
                             break;
                         } else if (dir == "v") {
                             vert = true;
@@ -215,6 +191,26 @@
 
         grid = g;
         return true;
+    }
+
+    /// if the cell at pos is miss/hit already, returns false, otherwise replaces empty with miss and ship with hit
+    /// always prints a message for hit/miss, and prints 'coordinate already picked' if player == true
+    static bool Fire(ref Cell[,] grid, (int,int) pos, bool player) {
+        switch (grid[pos.Item2, pos.Item1]) {
+            case Cell.Empty:
+                Console.WriteLine("miss " + FmtCoord(pos.Item1, pos.Item2));
+                grid[pos.Item2, pos.Item1] = Cell.Miss;
+                return true;
+            case Cell.Ship:
+                Console.WriteLine("hit " + FmtCoord(pos.Item1, pos.Item2));
+                grid[pos.Item2, pos.Item1] = Cell.Hit;
+                return true;
+            default:
+                if (player) {
+                    Console.WriteLine("coordinate already picked");
+                }
+                return false;
+        }
     }
 
     /// prints out the given grid at the given offset
